@@ -1,7 +1,8 @@
 const Sauce = require("../models/Sauce");
+const fs = require("fs");
 
-exports.createSauce = (req, res, next) => {
-  JSON.parse(req.body.sauce);
+exports.createSauce = async (req, res, next) => {
+  let sauceObject = await JSON.parse(req.body.sauce);
   delete sauceObject._id;
   delete sauceObject._userId;
   const sauce = new Sauce({
@@ -15,13 +16,14 @@ exports.createSauce = (req, res, next) => {
     usersLiked: [],
     usersDisliked: [],
   });
-  console.log(req.sauce);
-  sauce
+
+  await sauce
     .save()
-    .then(() => res.status(201).json({ message: "Objet enregistré !" }))
     .catch((error) => {
-      res.status(400).json({ error: "creating arborded" });
-    });
+      res.status(400).json({ error });
+      throw new Error("creating sauce arborded");
+    })
+    .then(() => res.status(201).json({ message: "Objet enregistré !" }));
 };
 
 exports.getOneSauce = (req, res, next) => {
@@ -37,30 +39,49 @@ exports.getOneSauce = (req, res, next) => {
 };
 
 exports.modifySauce = async (req, res, next) => {
-  const sauce = await Sauce.updateOne(
-    { _id: req.params.id },
-    { ...req.body, _id: req.params.id }
-  )
-    .then((sauce) => {
-      res.status(201).json({ message: "Sauce updated successfully!" });
-    })
-    .catch((error) => {
-      res.status(400).json({ error });
-      throw new Error(" sauce can't be update ! ");
-    });
+  const sauceObject = (await req.file)
+    ? {
+        ...JSON.parse(req.body.sauce),
+        imageUrl: `${req.protocol}://${req.get("host")}/images/${
+          req.file.filename
+        }`,
+      }
+    : { ...req.body };
+
+  delete sauceObject._userId;
+  let sauce = await Sauce.findOne({ _id: req.params.id });
+  if (!sauce) return res.status(400).json({ error: "Sauce not find" });
+  if (sauce.userId != req.auth.userId) {
+    res.status(401).json({ message: "Not authorized" });
+  } else {
+    Sauce.updateOne(
+      { _id: req.params.id },
+      { ...sauceObject, _id: req.params.id }
+    )
+      .then(() => res.status(200).json({ message: "Sauce modified !" }))
+      .catch((error) => res.status(401).json({ error }));
+  }
 };
 
-exports.deleteSauce = async (req, res, next) => {
-  try {
-    const sauce = await Sauce.deleteOne({ _id: req.params.id }).then(
-      (sauce) => {
-        res.status(200).json({ message: "Sauce Deleted!" });
+exports.deleteSauce = (req, res, next) => {
+  Sauce.findOne({ _id: req.params.id })
+    .then((sauce) => {
+      if (sauce.userId != req.auth.userId) {
+        res.status(401).json({ message: "Not authorized" });
+      } else {
+        const filename = sauce.imageUrl.split("/images/")[1];
+        fs.unlink(`images/${filename}`, () => {
+          Sauce.deleteOne({ _id: req.params.id })
+            .then(() => {
+              res.status(200).json({ message: "Objet supprimé !" });
+            })
+            .catch((error) => res.status(401).json({ error }));
+        });
       }
-    );
-  } catch (error) {
-    res.status(400).json({ error });
-    throw new Error("Can't delete sauce");
-  }
+    })
+    .catch((error) => {
+      res.status(500).json({ error });
+    });
 };
 
 exports.getAllSauces = async (req, res, next) => {

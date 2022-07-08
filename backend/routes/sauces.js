@@ -13,7 +13,7 @@ router.post("/", auth, multer, saucesCtrl.createSauce);
 router.get("/:id", auth, saucesCtrl.getOneSauce);
 
 // modifySauce
-router.put("/:id", auth, saucesCtrl.modifySauce);
+router.put("/:id", auth, multer, saucesCtrl.modifySauce);
 
 // deleteSauce
 router.delete("/:id", auth, saucesCtrl.deleteSauce);
