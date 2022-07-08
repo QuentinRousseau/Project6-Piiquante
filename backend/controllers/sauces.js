@@ -2,12 +2,12 @@ const Sauce = require("../models/Sauce");
 const fs = require("fs");
 
 exports.createSauce = async (req, res, next) => {
-  let sauceObject = await JSON.parse(req.body.sauce);
-  delete sauceObject._id;
-  delete sauceObject._userId;
+  let sauceObject = await JSON.parse(req.body.sauce); // decoupe la requete en plusieurs champs
+  delete sauceObject._id; // enleve l'id pour la remplacer plus tard
+  delete sauceObject._userId; // enleve l'userId pour l'attribuer plus tard
   const sauce = new Sauce({
-    ...sauceObject,
-    userId: req.auth.userId,
+    ...sauceObject, // creation d'un objet sauce en attribuant les champs de la requete + l'userId (l'utilisateur qui cree la sauce) et la creation de l'URL de l'image
+    userId: req.auth.userId, // creation des compteurs likes et dislikes, ainsi que des tableau rassemblant la liste des utilisateurs
     imageUrl: `${req.protocol}://${req.get("host")}/images/${
       req.file.filename
     }`,
@@ -17,11 +17,10 @@ exports.createSauce = async (req, res, next) => {
     usersDisliked: [],
   });
 
-  await sauce
+  await sauce // on attends la creation de l'objet, pour le sauvegarder, et si probleme apparait, le catch pour envoyer un message d'erreur sinon renvoyer un msg objet cree
     .save()
     .catch((error) => {
       res.status(400).json({ error });
-      throw new Error("creating sauce arborded");
     })
     .then(() => res.status(201).json({ message: "Objet enregistré !" }));
 };
