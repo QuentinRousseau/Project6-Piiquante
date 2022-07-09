@@ -93,3 +93,105 @@ exports.getAllSauces = async (req, res, next) => {
     throw new Error("no sauces find ! ");
   }
 };
+
+exports.likeOrDislike = (req, res, next) => {
+  const like = req.body.like;
+  const userId = req.body.userId;
+  const sauceId = req.body.id;
+
+  if (like === 0) {
+    Sauce.findOne({ _id: sauceId });
+    try {
+      if (sauce.usersLiked.includes(userId)) {
+        Sauce.updateOne(
+          {
+            _id: sauceId,
+          },
+          {
+            $pull: {
+              usersLiked: userId,
+            },
+            $inc: {
+              like: -1,
+            },
+          }
+        );
+        return res.status(200).json({ message: "like clear !" });
+      }
+    } catch (err) {
+      res.status(400).json({ error });
+    }
+
+    try {
+      if (sauce.usersDisliked.includes(userId)) {
+        Sauce.updateOne(
+          {
+            _id: sauceId,
+          },
+          {
+            $pull: {
+              usersDisliked: userId,
+            },
+            $inc: {
+              dislikes: -1,
+            },
+          }
+        );
+        return res.status(200).json({ message: "dislike clear !" });
+      }
+    } catch (err) {
+      res.status(400).json({ error });
+    }
+  }
+
+  if (like === 1) {
+    Sauce.updateOne(
+      {
+        _id: sauceId,
+      },
+      {
+        $push: {
+          usersLiked: userId,
+        },
+        $inc: {
+          likes: +1,
+        },
+      }
+    )
+      .then(() =>
+        res.status(200).json({
+          message: "sauce liked !",
+        })
+      )
+      .catch((error) =>
+        res.status(400).json({
+          error,
+        })
+      );
+  }
+  if (like === -1) {
+    Sauce.updateOne(
+      {
+        _id: sauceId,
+      },
+      {
+        $push: {
+          usersDisliked: userId,
+        },
+        $inc: {
+          dislikes: +1,
+        },
+      }
+    )
+      .then(() =>
+        res.status(200).json({
+          message: "sauce disliked !",
+        })
+      )
+      .catch((error) =>
+        res.status(400).json({
+          error,
+        })
+      );
+  }
+};
