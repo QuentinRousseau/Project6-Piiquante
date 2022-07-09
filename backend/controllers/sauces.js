@@ -25,8 +25,8 @@ exports.createSauce = async (req, res, next) => {
     .then(() => res.status(201).json({ message: "Objet enregistré !" }));
 };
 
-exports.getOneSauce = (req, res, next) => {
-  Sauce.findOne({ _id: req.params.id })
+exports.getOneSauce = async (req, res, next) => {
+  await Sauce.findOne({ _id: req.params.id })
     .then((sauce) => {
       res.status(200).json(sauce);
     })
@@ -62,8 +62,8 @@ exports.modifySauce = async (req, res, next) => {
   }
 };
 
-exports.deleteSauce = (req, res, next) => {
-  Sauce.findOne({ _id: req.params.id })
+exports.deleteSauce = async (req, res, next) => {
+  await Sauce.findOne({ _id: req.params.id })
     .then((sauce) => {
       if (sauce.userId != req.auth.userId) {
         res.status(401).json({ message: "Not authorized" });
@@ -94,104 +94,47 @@ exports.getAllSauces = async (req, res, next) => {
   }
 };
 
-exports.likeOrDislike = (req, res, next) => {
-  const like = req.body.like;
-  const userId = req.body.userId;
-  const sauceId = req.body.id;
+exports.likeOrDislike = async (req, res, next) => {
+  // getsauceId => const mySauce
+  // hasLike => mySauce.userliked.includes(userId)
+  // hasDislike => mySauce.userdisLiked.includes(userId)
+  // if(hasLike) => enlever l'user de la liste et enlever 1 au compteur de like
+  // if(hasDislike) => enlever l'user de la liste et enlever 1 au compteur de dislike
+  //  if(like === 1) => ajouter l'user a la liste et ajouter 1 au au compteur de like
+  //  if(like === -1) => ajouter l'user a la liste et ajouter 1 au compteur de dislike
+  // sauvegarde sur mongoDB => mySauce.save()
+  // res.status(200).json(message:" updated !");
 
-  if (like === 0) {
-    Sauce.findOne({ _id: sauceId });
-    try {
-      if (sauce.usersLiked.includes(userId)) {
-        Sauce.updateOne(
-          {
-            _id: sauceId,
-          },
-          {
-            $pull: {
-              usersLiked: userId,
-            },
-            $inc: {
-              like: -1,
-            },
-          }
-        );
-        return res.status(200).json({ message: "like clear !" });
-      }
-    } catch (err) {
-      res.status(400).json({ error });
-    }
+  const like = req.body.like; // 1 || 0 || -1
+  const userId = req.body.userId; // recupere l'userid qui interagis
+  const sauceId = req.params.id; // id de la sauce recupéré dans l'url de la requete
+  const mySauce = await Sauce.findById(sauceId); // recherche la sauce concernée par la req
+  const hasLike = mySauce.usersLiked.includes(userId); // vérifie que l'utilisateur est présent dans la liste "likes"
+  const hasDislike = mySauce.usersDisliked.includes(userId); //vérifie que l'utilisateur est présent dans la liste "likes"
 
-    try {
-      if (sauce.usersDisliked.includes(userId)) {
-        Sauce.updateOne(
-          {
-            _id: sauceId,
-          },
-          {
-            $pull: {
-              usersDisliked: userId,
-            },
-            $inc: {
-              dislikes: -1,
-            },
-          }
-        );
-        return res.status(200).json({ message: "dislike clear !" });
-      }
-    } catch (err) {
-      res.status(400).json({ error });
-    }
+  // gestion du like === 0 et reset de la requete user
+  if (hasLike) {
+    mySauce.likes = mySauce.likes - 1;
+    mySauce.usersLiked = mySauce.usersLiked.filter((id) => id !== userId);
+  }
+  if (hasDislike) {
+    mySauce.dislikes = mySauce.dislikes - 1;
+    mySauce.usersDisliked = mySauce.usersDisliked.filter((id) => id !== userId);
   }
 
+  // cas de like
   if (like === 1) {
-    Sauce.updateOne(
-      {
-        _id: sauceId,
-      },
-      {
-        $push: {
-          usersLiked: userId,
-        },
-        $inc: {
-          likes: +1,
-        },
-      }
-    )
-      .then(() =>
-        res.status(200).json({
-          message: "sauce liked !",
-        })
-      )
-      .catch((error) =>
-        res.status(400).json({
-          error,
-        })
-      );
+    mySauce.likes = mySauce.likes + 1;
+    mySauce.usersLiked.push(userId);
   }
+
+  // cas de dislike
   if (like === -1) {
-    Sauce.updateOne(
-      {
-        _id: sauceId,
-      },
-      {
-        $push: {
-          usersDisliked: userId,
-        },
-        $inc: {
-          dislikes: +1,
-        },
-      }
-    )
-      .then(() =>
-        res.status(200).json({
-          message: "sauce disliked !",
-        })
-      )
-      .catch((error) =>
-        res.status(400).json({
-          error,
-        })
-      );
+    mySauce.dislikes = mySauce.dislikes + 1;
+    mySauce.usersDisliked.push(userId);
   }
+  //sauvegarde des likes/dislikes de la sauce
+  await mySauce.save().catch((error) => res.status(401).json({ error }));
+
+  res.status(200).json({ message: " likes update !" });
 };
