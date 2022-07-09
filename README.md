@@ -1,4 +1,4 @@
-:hot_pepper: Project6-Piiquante :hot_pepper:
+:hot_pepper: Project6-Piiquante :hot_pepper:     
 "Construisez une API sécurisée pour une application d'avis gastronomiques" by OpenClassrooms
 
 
