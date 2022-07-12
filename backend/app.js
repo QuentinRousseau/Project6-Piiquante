@@ -15,18 +15,12 @@ app.use(helmet());
 app.use(express.json());
 
 const urlMongo = process.env.MONGODB_URL;
-//const user = process.env.MONGODB_ACCESS_USER;
-//const mdp = process.env.MONGODB_ACCESS_PASSWORD;
 
 const statusDB = mongoose
-  .connect(
-    urlMongo,
-    //"mongodb+srv://quentinR:OcProject6@cluster0.rzzmts9.mongodb.net/?retryWrites=true&w=majority",
-    {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    }
-  )
+  .connect(urlMongo, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
   .then(() => console.log("Connexion à MongoDB réussie !"))
   .catch(() => console.log("Connexion à MongoDB échouée !"));
 
