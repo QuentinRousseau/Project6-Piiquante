@@ -1,5 +1,6 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
+const { token } = require("morgan");
 const User = require("../models/User");
 
 exports.signup = async (req, res, next) => {
@@ -12,7 +13,7 @@ exports.signup = async (req, res, next) => {
     .save() // attente de la réponse de la sauvegarde de celui ci
     .catch((error) => {
       res.status(400).json({ error });
-      throw new Error("creating arborded");
+      throw new Error("This user already exists");
     }) // catch l'erreur et renvoie un code 400 plus un message specifiant le problème
     .then(() => res.status(201).json({ message: "User created !" })); // sinon renvoie d'un code 201 et d'un message pour specifier la creation de l'utilisateur
 };

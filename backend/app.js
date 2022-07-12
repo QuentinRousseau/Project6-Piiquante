@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 require("express-async-errors");
 const mongoose = require("mongoose");
@@ -13,15 +14,19 @@ app.use(cors());
 app.use(helmet());
 app.use(express.json());
 
-const statusDB = mongoose.connect(
-  "mongodb+srv://quentinR:OcProject6@cluster0.rzzmts9.mongodb.net/?retryWrites=true&w=majority",
-  {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  }
-);
+const urlMongo = process.env.MONGODB_URL;
+//const user = process.env.MONGODB_ACCESS_USER;
+//const mdp = process.env.MONGODB_ACCESS_PASSWORD;
 
-statusDB
+const statusDB = mongoose
+  .connect(
+    urlMongo,
+    //"mongodb+srv://quentinR:OcProject6@cluster0.rzzmts9.mongodb.net/?retryWrites=true&w=majority",
+    {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    }
+  )
   .then(() => console.log("Connexion à MongoDB réussie !"))
   .catch(() => console.log("Connexion à MongoDB échouée !"));
 
