@@ -6,6 +6,7 @@ const path = require("path");
 const morgan = require("morgan");
 const cors = require("cors");
 const helmet = require("helmet");
+const urlMongo = process.env.MONGODB_URL;
 
 const app = express();
 app.use(morgan("dev", { immediate: true }));
@@ -13,8 +14,6 @@ app.use(morgan("dev", { immediate: false }));
 app.use(cors());
 app.use(helmet());
 app.use(express.json());
-
-const urlMongo = process.env.MONGODB_URL;
 
 const statusDB = mongoose
   .connect(urlMongo, {
