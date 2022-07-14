@@ -6,7 +6,6 @@ const path = require("path");
 const morgan = require("morgan");
 const cors = require("cors");
 const helmet = require("helmet");
-const urlMongo = process.env.MONGODB_URL;
 
 const app = express();
 app.use(morgan("dev", { immediate: true }));
@@ -15,18 +14,7 @@ app.use(cors());
 app.use(helmet());
 app.use(express.json());
 
-const statusDB = mongoose
-  .connect(urlMongo, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log("Connexion à MongoDB réussie !"))
-  .catch(() => console.log("Connexion à MongoDB échouée !"));
-
-app.use((req, res, next) => {
-  statusDB.then(() => next()).catch(() => next(new Error("DB not found"))),
-    res.set("Cross-Origin-Resource-Policy", "cross-origin");
-});
+app.use(require("./middleware/statusDB"));
 
 app.use("/api/auth", require("./routes/user"));
 app.use("/images", express.static(path.join(__dirname, "images")));

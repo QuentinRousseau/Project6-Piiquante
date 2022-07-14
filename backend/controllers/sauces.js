@@ -112,6 +112,8 @@ exports.likeOrDislike = async (req, res, next) => {
   const hasLike = mySauce.usersLiked.includes(userId); // vérifie que l'utilisateur est présent dans la liste "likes"
   const hasDislike = mySauce.usersDisliked.includes(userId); //vérifie que l'utilisateur est présent dans la liste "likes"
 
+  //a voir pour une refactorisation plus performante
+
   // gestion du like === 0 et reset de la requete user
   if (hasLike) {
     mySauce.likes = mySauce.likes - 1;

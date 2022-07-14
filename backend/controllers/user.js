@@ -1,5 +1,5 @@
 const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
+const jwt = require("../managers/jwt");
 const { token } = require("morgan");
 const User = require("../models/User");
 
@@ -12,10 +12,10 @@ exports.signup = async (req, res, next) => {
   await user
     .save() // attente de la réponse de la sauvegarde de celui ci
     .catch((error) => {
-      res.status(400).json({ error });
-      throw new Error("This user already exists");
-    }) // catch l'erreur et renvoie un code 400 plus un message specifiant le problème
-    .then(() => res.status(201).json({ message: "User created !" })); // sinon renvoie d'un code 201 et d'un message pour specifier la creation de l'utilisateur
+      throw res.status(400).json({ error });
+    }); // catch l'erreur et renvoie un code 400 plus un message specifiant le problème
+
+  res.status(201).json({ message: "User created !" }); // sinon renvoie d'un code 201 et d'un message pour specifier la creation de l'utilisateur
 };
 
 exports.login = async (req, res, next) => {
@@ -26,8 +26,6 @@ exports.login = async (req, res, next) => {
 
   res.status(200).json({
     userId: user._id,
-    token: jwt.sign({ userId: user._id }, "RANDOM_TOKEN_SECRET", {
-      expiresIn: "24h",
-    }),
+    token: jwt.sign({ userId: user._id }), //config de jwt dans jwt.js
   });
 };
