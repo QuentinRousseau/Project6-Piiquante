@@ -1,7 +1,5 @@
-require("dotenv").config();
 const express = require("express");
 require("express-async-errors");
-const mongoose = require("mongoose");
 const path = require("path");
 const morgan = require("morgan");
 const cors = require("cors");
@@ -25,6 +23,7 @@ app.use((req, res, next) => {
 });
 
 app.use((err, req, res, next) => {
+  //gestion d'erreur par le throw
   if (!(err instanceof Error)) return;
   console.log(err);
   res.status(500).json({ message: "INTERNAL_SERVER_ERROR" });
