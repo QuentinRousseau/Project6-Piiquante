@@ -1,6 +1,5 @@
 const bcrypt = require("bcrypt");
 const jwt = require("../managers/jwt");
-const { token } = require("morgan");
 const User = require("../models/User");
 
 exports.signup = async (req, res, next) => {
