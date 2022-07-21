@@ -50,39 +50,34 @@ exports.modifySauce = async (req, res, next) => {
   delete sauceObject._userId;
   let sauce = await Sauce.findOne({ _id: req.params.id });
   if (!sauce) return res.status(400).json({ error: "Sauce not find" });
-  if (sauce.userId != req.auth.userId) {
-    res.status(401).json({ message: "Not authorized" });
-  } else {
-    Sauce.updateOne(
-      { _id: req.params.id },
-      { ...sauceObject, _id: req.params.id }
-    )
-      .then(() => res.status(200).json({ message: "Sauce modified !" }))
-      .catch((error) => res.status(401).json({ error }));
-  }
+  if (sauce.userId != req.auth.userId)
+    return res.status(401).json({ error: "Not authorized" });
+  Sauce.updateOne(
+    { _id: req.params.id },
+    { ...sauceObject, _id: req.params.id }
+  )
+    .then(() => res.status(200).json({ message: "Sauce modified !" }))
+    .catch((error) => res.status(401).json({ error }));
 };
 
 exports.deleteSauce = async (req, res, next) => {
-  await Sauce.findOne({ _id: req.params.id })
-    .then((sauce) => {
-      if (sauce.userId != req.auth.userId) {
-        res.status(401).json({ message: "Not authorized" });
-      } else {
-        const filename = sauce.imageUrl.split("images/")[1];
-        fs.unlink(`images/${filename}`, () => {
-          Sauce.deleteOne({ _id: req.params.id })
-            .then(() => {
-              res.status(200).json({ message: "Objet supprimé !" });
-            })
-            .catch((error) => res.status(401).json({ error }));
-        });
-      }
-    })
-    .catch((error) => {
-      res.status(500).json({ error });
-    });
-};
+  const sauce = await Sauce.findOne({ _id: req.params.id });
 
+  if (!sauce) return res.status(400).json({ error: "Sauce not found !" });
+
+  if (sauce.userId != req.auth.userId)
+    return res.status(401).json({ error: "Not authorized" });
+
+  const filename = sauce.imageUrl.split("images/")[1];
+
+  await fs.promises.unlink(`images/${filename}`);
+
+  await Sauce.deleteOne({ _id: req.params.id }).catch((error) => {
+    throw res.status(401).json({ error });
+  });
+
+  res.status(200).json({ message: "Objet supprimé !" });
+};
 exports.getAllSauces = async (req, res, next) => {
   try {
     const sauces = await Sauce.find().then((sauces) => {
@@ -106,7 +101,7 @@ exports.likeOrDislike = async (req, res, next) => {
   // res.status(200).json(message:" updated !");
 
   const like = req.body.like; // 1 || 0 || -1
-  const userId = req.body.userId; // recupere l'userid qui interagis
+  const userId = req.auth.userId; // recupere l'userid qui est connecté
   const sauceId = req.params.id; // id de la sauce recupéré dans l'url de la requete
   const mySauce = await Sauce.findById(sauceId); // recherche la sauce concernée par la req
   const hasLike = mySauce.usersLiked.includes(userId); // vérifie que l'utilisateur est présent dans la liste "likes"
