@@ -1,6 +1,29 @@
 const Sauce = require("../models/Sauce");
 const fs = require("fs");
 
+exports.getAllSauces = async (req, res, next) => {
+  try {
+    const sauces = await Sauce.find().then((sauces) => {
+      res.status(200).json(sauces);
+    });
+  } catch (error) {
+    res.status(400).json({ error });
+    throw new Error("no sauces find ! ");
+  }
+};
+
+exports.getOneSauce = async (req, res, next) => {
+  await Sauce.findOne({ _id: req.params.id })
+    .then((sauce) => {
+      res.status(200).json(sauce);
+    })
+    .catch((error) => {
+      res.status(404).json({
+        error: error,
+      });
+    });
+};
+
 exports.createSauce = async (req, res, next) => {
   let sauceObject = await JSON.parse(req.body.sauce); // decoupe la requete en plusieurs champs
   delete sauceObject._id; // enleve l'id pour la remplacer plus tard
@@ -23,18 +46,6 @@ exports.createSauce = async (req, res, next) => {
       res.status(400).json({ error });
     })
     .then(() => res.status(201).json({ message: "Objet enregistré !" }));
-};
-
-exports.getOneSauce = async (req, res, next) => {
-  await Sauce.findOne({ _id: req.params.id })
-    .then((sauce) => {
-      res.status(200).json(sauce);
-    })
-    .catch((error) => {
-      res.status(404).json({
-        error: error,
-      });
-    });
 };
 
 exports.modifySauce = async (req, res, next) => {
@@ -77,16 +88,6 @@ exports.deleteSauce = async (req, res, next) => {
   });
 
   res.status(200).json({ message: "Objet supprimé !" });
-};
-exports.getAllSauces = async (req, res, next) => {
-  try {
-    const sauces = await Sauce.find().then((sauces) => {
-      res.status(200).json(sauces);
-    });
-  } catch (error) {
-    res.status(400).json({ error });
-    throw new Error("no sauces find ! ");
-  }
 };
 
 exports.likeOrDislike = async (req, res, next) => {
